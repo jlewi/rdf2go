@@ -11,6 +11,7 @@ import (
 
 	rdf "github.com/deiu/gon3"
 	jsonld "github.com/linkeddata/gojsonld"
+	mimePkg "mime"
 )
 
 // Graph structure
@@ -170,15 +171,21 @@ func (g *Graph) All(s Term, p Term, o Term) []*Triple {
 }
 
 // Merge is used to add all the triples form another graph to this one
-func (g *Graph) Merge(toMerge *Graph){
-	for triple := range toMerge.IterTriples(){
+func (g *Graph) Merge(toMerge *Graph) {
+	for triple := range toMerge.IterTriples() {
 		g.Add(triple)
 	}
 }
 
 // Parse is used to parse RDF data from a reader, using the provided mime type
 func (g *Graph) Parse(reader io.Reader, mime string) error {
-	parserName := mimeParser[mime]
+	mType, _, err := mimePkg.ParseMediaType(mime)
+
+	if err != nil {
+		return fmt.Errorf("Failed to parse mediatype: %v; error %v", mime, err)
+	}
+
+	parserName := mimeParser[mType]
 	if len(parserName) == 0 {
 		parserName = "guess"
 	}
